@@ -6,10 +6,17 @@
 	objectVersion = 50;
 	objects = {
 
+/* Begin PBXFileReference section */
+		C74D679B221C8CA600D3CF6A /* twitter_network.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = twitter_network.py; sourceTree = "<group>"; };
+		C74D679C221DBD8000D3CF6A /* crawl.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = crawl.py; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
 /* Begin PBXGroup section */
 		C74D6790221C8C5500D3CF6A = {
 			isa = PBXGroup;
 			children = (
+				C74D679C221DBD8000D3CF6A /* crawl.py */,
+				C74D679B221C8CA600D3CF6A /* twitter_network.py */,
 			);
 			sourceTree = "<group>";
 		};
@@ -22,7 +29,8 @@
 			buildConfigurationList = C74D6798221C8C5500D3CF6A /* Build configuration list for PBXLegacyTarget "twitter_network" */;
 			buildPhases = (
 			);
-			buildToolPath = /usr/bin/python;
+			buildToolPath = /usr/bin/pythonw;
+			buildWorkingDirectory = "";
 			dependencies = (
 			);
 			name = twitter_network;
