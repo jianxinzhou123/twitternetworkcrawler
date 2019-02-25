@@ -113,7 +113,7 @@ def get_reciprocal_friends(twitter_api, screen_name=None, friends_limit=maxint, 
     response = make_twitter_request(twitter_api.followers.ids, screen_name=screen_name, count = followers_limit)
     followers = response["ids"]
     
-    reciprocal_friends = set(friends) & set(followers)
+    reciprocal_friends = list(set(friends) & set(followers))
     return reciprocal_friends
 
 

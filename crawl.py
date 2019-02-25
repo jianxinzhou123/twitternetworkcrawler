@@ -1,5 +1,7 @@
 import networkx
 import twitter_network
+import pymongo
+import numpy as np
 
 screen_name="petercougz"
 twitter_api = twitter_network.oauth_login()
@@ -26,6 +28,36 @@ def getScreenName(users):
 
     return output
 
+def save_to_mongo(data, mongo_db, mongo_db_coll, **mongo_conn_kw):
+    
+    client = pymongo.MongoClient(**mongo_conn_kw)
+    db = client[mongo_db]
+    coll = db[mongo_db_coll]
+    
+    try:
+        return coll.insert_many(data)
+    except:
+        return coll.insert_one(data)
+
+def load_from_mongo(mongo_db, mongo_db_coll, return_cursor=False,criteria=None, projection=None, **mongo_conn_kw):
+    
+    client = pymongo.MongoClient(**mongo_conn_kw)
+    db = client[mongo_db]
+    coll = db[mongo_db_coll]
+    
+    if criteria is None:
+        criteria = {}
+    
+    if projection is None:
+        cursor = coll.find(criteria)
+    else:
+        cursor = coll.find(criteria, projection)
+    
+    if return_cursor:
+        return cursor
+    else:
+        return [ item for item in cursor ]
+
 
 def pickFiveMostPopular(users):
     unsortedList_by_follower_count = []
@@ -35,8 +67,30 @@ def pickFiveMostPopular(users):
         unsortedList_by_follower_count.append(tuple((user, p[user]['followers_count'])))
     sortedList_by_follower_count = sorted(unsortedList_by_follower_count, key = lambda x : x[1], reverse=True)
     top5 = [x[0] for x in sortedList_by_follower_count[:5]]
+
     print("The five most popular people who follow " + screen_name + " are: " + getScreenName(top5))
 
     return top5
 
-network_main_nodes = pickFiveMostPopular(reciprocal_friends_ids)
+
+def crawl_followers(twitter_api, screen_name, limit=1000000, depth=3, **mongo_conn_kw):
+    
+    seed_id = str(twitter_api.users.show(screen_name=screen_name)['id'])
+    
+    #_, next_queue = twitter_network.get_friends_followers_ids(twitter_api, user_id=seed_id, friends_limit=0, followers_limit=limit)
+    next_queue = pickFiveMostPopular(twitter_network.get_reciprocal_friends(twitter_api, screen_name=screen_name, friends_limit=0, followers_limit=limit))
+    
+    
+    save_to_mongo({'followers' : [ _id for _id in next_queue ]}, 'followers_crawl', '{0}-follower_ids'.format(seed_id), **mongo_conn_kw)
+    d = 1
+    while d < depth:
+        d += 1
+        (queue, next_queue) = (next_queue, [])
+        for fid in queue:
+            _, follower_ids = get_friends_followers_ids(twitter_api, user_id=fid,friends_limit=0, followers_limit=limit)
+            save_to_mongo({'followers' : [ _id for _id in follower_ids ]},'followers_crawl', '{0}-follower_ids'.format(fid))
+            next_queue += follower_ids
+    print("Done crawling!")
+
+
+print(crawl_followers(twitter_api, screen_name, limit=100000, depth=4))
