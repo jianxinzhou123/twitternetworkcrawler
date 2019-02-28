@@ -64,7 +64,7 @@ def make_twitter_request(twitter_api_func, max_errors=10, *args, **kw):
             if sleep_when_rate_limited:
                 print("Retrying in 15 minutes...Sleeping...", file=sys.stderr)
                 sys.stderr.flush()
-                time.sleep(60*15 + 5)
+                time.sleep(60*15 + 1)
                 print('...Sleeping...Awake now and trying again.', file=sys.stderr)
                 return 2
             else:

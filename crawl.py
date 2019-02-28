@@ -1,7 +1,9 @@
-import networkx
+import networkx as nx
 import twitter_network
 import pymongo
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 screen_name="petercougz"
 twitter_api = twitter_network.oauth_login()
@@ -73,11 +75,12 @@ def pickFiveMostPopular(users):
 
 
 def crawl_followers(twitter_api, screen_name, limit=1000000, depth=3, **mongo_conn_kw):
-    
+   
+   
     seed_id = str(twitter_api.users.show(screen_name=screen_name)['id'])
     
-    #_, next_queue = twitter_network.get_friends_followers_ids(twitter_api, user_id=seed_id, friends_limit=0, followers_limit=limit)
     next_queue = pickFiveMostPopular(twitter_network.get_reciprocal_friends(twitter_api, screen_name=screen_name, friends_limit=0, followers_limit=limit))
+
     print("The five most popular people who follow " + screen_name + " are: " + getScreenName(next_queue))
     print()
     
@@ -88,20 +91,35 @@ def crawl_followers(twitter_api, screen_name, limit=1000000, depth=3, **mongo_co
         (queue, next_queue) = (next_queue, [])
         for fid in queue:
             _, follower_ids = twitter_network.get_friends_followers_ids(twitter_api, user_id=fid,friends_limit=0, followers_limit=500)
-            #for node in follower_ids:
-            #    pass
-            #    draw node here. fetch data from mongoDB and draw edges if they are a tuple.
-            new_follower_ids = pickFiveMostPopular(follower_ids) #Pick 5
+            
+        #    draw node here. fetch data from mongoDB and draw edges if they are a tuple.
 
-            print("The five most popular people who follow " + str(int(fid)) + " are: " + getScreenName(new_follower_ids))
-            print()
+            try:
+                new_follower_ids = pickFiveMostPopular(follower_ids) #Pick 5
 
-            save_to_mongo({'followers' : [ _id for _id in new_follower_ids ]},'followers_crawl', '{0}-follower_ids'.format(fid))
+                for node in new_follower_ids:
+                    G.add_node(node)
 
-            next_queue += new_follower_ids
+                print("\nThe five most popular people who follow " + str(int(fid)) + " are: " + getScreenName(new_follower_ids))
+                print()
 
+                save_to_mongo({'followers' : [ _id for _id in new_follower_ids ]},'followers_crawl', '{0}-follower_ids'.format(fid))
+            
+                next_queue += new_follower_ids
+
+            except:
+                print("\nAn unexpected exception happened.")
+                print()
+
+                    
     print("Done crawling!")
     print()
 
-crawl_followers(twitter_api, screen_name, limit=100000, depth=3)
 
+    pos = nx.spring_layout(G)
+    nx.draw(G,pos,font_size=10, node_size = 10, with_labels=True)
+    plt.savefig("grpah.png")
+
+
+G = nx.Graph()
+crawl_followers(twitter_api, screen_name, limit=100000, depth=3)
