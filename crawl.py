@@ -28,7 +28,7 @@ def getScreenName(users):
     output = ""
     p = twitter_network.get_user_profile(twitter_api, screen_names=None, user_ids=users)
     for user in p:
-        output += (p[user]['name']) + "(" + str(int((p[user]['followers_count']))) + " followers), "
+        output += (p[user]['name']) + " - " + p[user]['id'] + " (" + str(int((p[user]['followers_count']))) + " followers), "
     output = ''.join(output)[:-2]
 
     return output
@@ -150,7 +150,5 @@ load_from_mongo('followers_crawl', 'new_follower_ids', return_cursor=False,crite
 print("\nNumber of nodes: " + str(G.number_of_nodes()))
 print("\nNodes available: \n" + G.adj)
 print("\nNumber of edges: " + str(G.number_of_edges()))
-print "\nAverage shortest path length: " + str(nx.average_shortest_path_length(G))
-print "\nAverageDiameter: " + str(nx.diameter(G,e=None,usebounds=False))
-
-
+print("\nAverage shortest path length: " + str(nx.average_shortest_path_length(G)))
+print("\nAverageDiameter: " + str(nx.diameter(G,e=None,usebounds=False)))
