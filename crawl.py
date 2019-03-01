@@ -4,6 +4,10 @@ import pymongo
 import numpy as np
 import matplotlib.pyplot as plt
 
+##Jian Xin Zhou
+##Social Media Data Minining
+##@2019
+
 
 screen_name="petercougz"
 twitter_api = twitter_network.oauth_login()
@@ -76,10 +80,12 @@ def pickFiveMostPopular(users):
 
 def crawl_followers(twitter_api, screen_name, limit=1000000, depth=3, **mongo_conn_kw):
    
-   
     seed_id = str(twitter_api.users.show(screen_name=screen_name)['id'])
     
     next_queue = pickFiveMostPopular(twitter_network.get_reciprocal_friends(twitter_api, screen_name=screen_name, friends_limit=0, followers_limit=limit))
+    
+    for user in next_queue:
+        G.add_edge(seed_id, user)
 
     print("The five most popular people who follow " + screen_name + " are: " + getScreenName(next_queue))
     print()
@@ -99,11 +105,12 @@ def crawl_followers(twitter_api, screen_name, limit=1000000, depth=3, **mongo_co
 
                 for node in new_follower_ids:
                     G.add_node(node)
+                    G.add_edge(fid, node)
 
                 print("\nThe five most popular people who follow " + str(int(fid)) + " are: " + getScreenName(new_follower_ids))
                 print()
 
-                save_to_mongo({'followers' : [ _id for _id in new_follower_ids ]},'followers_crawl', '{0}-follower_ids'.format(fid))
+                save_to_mongo({'followers' : [ _id for _id in new_follower_ids ]},'followers_crawl', '{0}-new_follower_ids'.format(fid))
             
                 next_queue += new_follower_ids
 
@@ -114,12 +121,36 @@ def crawl_followers(twitter_api, screen_name, limit=1000000, depth=3, **mongo_co
                     
     print("Done crawling!")
     print()
+    
 
 
     pos = nx.spring_layout(G)
     nx.draw(G,pos,font_size=10, node_size = 10, with_labels=True)
-    plt.savefig("grpah.png")
+    plt.savefig("graph.png")
+
+
+
+
+def delete_from_mongo(mongo_db, mongo_db_coll, return_cursor=False, criteria=None, projection=None, **mongo_conn_kw):
+    client = pymongo.MongoClient(**mongo_conn_kw)
+    db = client[mongo_db]
+    coll = db[mongo_db_coll]
+
+    try:
+        coll.drop()
+        print("\nColumn dropping success!")
+    except:
+        print("\nColumn dropping failure!")
 
 
 G = nx.Graph()
 crawl_followers(twitter_api, screen_name, limit=100000, depth=3)
+load_from_mongo('followers_crawl', 'new_follower_ids', return_cursor=False,criteria=None, projection=None)
+
+print("\nNumber of nodes: " + str(G.number_of_nodes()))
+print("\nNodes available: \n" + G.adj)
+print("\nNumber of edges: " + str(G.number_of_edges()))
+print "\nAverage shortest path length: " + str(nx.average_shortest_path_length(G))
+print "\nAverageDiameter: " + str(nx.diameter(G,e=None,usebounds=False))
+
+

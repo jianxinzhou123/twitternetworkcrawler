@@ -4,6 +4,10 @@ import time
 from functools import partial
 from sys import maxsize as maxint
 
+##Jian Xin Zhou
+##Social Media Data Minining
+##@2019
+
 def get_friends_followers_ids(twitter_api, screen_name=None, user_id=None, friends_limit=maxint, followers_limit=maxint):
     
     assert (screen_name != None) != (user_id != None), "Must have screen_name or user_id, but not both"
